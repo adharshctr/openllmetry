@@ -66,8 +66,8 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 def with_tracer_wrapper(func):
 
     def _with_tracer(tracer, duration_histogram, token_histogram):
-        def wrapper(wrapped, instance, args, kwargs):
-            return func(
+        async def wrapper(wrapped, instance, args, kwargs):
+            return await func(
                 tracer,
                 duration_histogram,
                 token_histogram,
@@ -95,7 +95,7 @@ async def _wrap_agent_run(
     agent, *_ = args
     run_config = args[7] if len(args) > 7 else None
     prompt_list = args[2] if len(args) > 2 else None
-    tool_name = args[4] if len(args) > 4 else None
+    tools = args[4] if len(args) > 4 else None
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
 
@@ -115,8 +115,8 @@ async def _wrap_agent_run(
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-            if tool_name:
-                extract_tool_details(tracer, tool_name)
+            if tools:
+                extract_tool_details(tracer, tools)
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
             if duration_histogram:
